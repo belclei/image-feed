@@ -1,9 +1,12 @@
 import React from "react";
-import { Platform, StyleSheet, View, Modal } from "react-native";
+import { Platform, StyleSheet, View, Modal, AsyncStorage } from "react-native";
 import { Constants } from "expo";
 
 import Feed from "./screens/Feed";
 import Comments from "./screens/Comments";
+
+const ARBITRATY_KEY_WITH_ALL_COMMENTS_DATA =
+  "ARBITRATY_KEY_WITH_ALL_COMMENTS_DATA";
 
 export default class App extends React.Component {
   state = {
@@ -11,6 +14,19 @@ export default class App extends React.Component {
     showModal: false,
     selectedItemId: null
   };
+  async componentDidMount() {
+    try {
+      const commentsForItem = await AsyncStorage.getItem(
+        ARBITRATY_KEY_WITH_ALL_COMMENTS_DATA
+      );
+
+      this.setState({
+        commentsForItem: commentsForItem ? JSON.parse(commentsForItem) : {}
+      });
+    } catch (e) {
+      console.log("Falha ao obter dados dos comentarios");
+    }
+  }
   onSubmitComment = text => {
     const { selectedItemId, commentsForItem } = this.state;
     const comments = commentsForItem[selectedItemId] || [];
@@ -21,6 +37,15 @@ export default class App extends React.Component {
     };
 
     this.setState({ commentsForItem: updated });
+
+    try {
+      AsyncStorage.setItem(
+        ARBITRATY_KEY_WITH_ALL_COMMENTS_DATA,
+        JSON.stringify(updated)
+      );
+    } catch (e) {
+      console.log("Falha ao salvar comentario", text, "para", selectedItemId);
+    }
   };
   openCommentScreen = id => {
     this.setState({
